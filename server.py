@@ -1,4 +1,5 @@
-from flask import Flask, render_template
+from flask import Flask, request, render_template
+from flask_cors import CORS
 import requests
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -6,6 +7,9 @@ import openai
 import random
 
 app = Flask(__name__)
+
+CORS(app)
+
 openai.api_key = "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"
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="855d003fbfa94a0b8b9bd61883ec6b3c",
                                                client_secret="dc10a96627ec41b29d6925bf020af7b4",
@@ -20,6 +24,8 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="855d003fbfa94a0b8b9bd6
     Returns:
         - a string
 """
+
+
 def gpt3_interpret(prompt):
     # Define the prompt and the OpenAI API parameters
     model = "text-davinci-003"
@@ -39,6 +45,7 @@ def gpt3_interpret(prompt):
     # Return the string
     return str(response.choices[0].text)
 
+
 """ get tracks with openai
 
     Parameters:
@@ -47,6 +54,8 @@ def gpt3_interpret(prompt):
     Returns
         - a string
 """
+
+
 def gpt3_tracks(prompt, genre):
     # Define the prompt and the OpenAI API parameters
     model = "text-davinci-003"
@@ -70,6 +79,7 @@ def gpt3_tracks(prompt, genre):
     # Return the string
     return str(response.choices[0].text)
 
+
 """ get mood emoji with openai
 
     Parameters:
@@ -77,6 +87,8 @@ def gpt3_tracks(prompt, genre):
     Returns:
         - a string with 1-3 emojis 
 """
+
+
 def gpt3_emoji(prompt):
     # Define the prompt and the OpenAI API parameters
     model = "text-davinci-003"
@@ -100,6 +112,7 @@ def gpt3_emoji(prompt):
     # Return the string
     return str(response.choices[0].text)
 
+
 """ get a response to the phrase
 
     Parameters:
@@ -107,6 +120,8 @@ def gpt3_emoji(prompt):
     Returns:
         - a string 
 """
+
+
 def gpt3_phrase(prompt):
     # Define the prompt and the OpenAI API parameters
     model = "text-davinci-003"
@@ -130,6 +145,7 @@ def gpt3_phrase(prompt):
     # Return the string
     return str(response.choices[0].text)
 
+
 """ use spotify to search for tracks and return a list of them
 
     Parameters:
@@ -137,6 +153,8 @@ def gpt3_phrase(prompt):
     Returns:
         - list of song URI's
 """
+
+
 def spotify_search_songs(track_list):
     to_strip = "0123456789. "
     tracks_url = []
@@ -160,9 +178,11 @@ def spotify_search_songs(track_list):
         # Check if any results were found
         if len(results['tracks']['items']) > 0:
             # Get the URI of the first search result
-            tracks_url.append(results['tracks']['items'][0]['external_urls']['spotify'])
-    
+            tracks_url.append(results['tracks']['items']
+                              [0]['external_urls']['spotify'])
+
     return tracks_url
+
 
 """ use to get html embed code for a list of songs
 
@@ -171,8 +191,10 @@ def spotify_search_songs(track_list):
     Returns:
         - a string HTML
 """
+
+
 def spotify_get_embed(tracks_uri):
-    embed_list = [] 
+    embed_list = []
     for url in tracks_uri:
         oembed_url = f'https://open.spotify.com/oembed?url={url}'
         response = requests.get(oembed_url)
@@ -180,11 +202,20 @@ def spotify_get_embed(tracks_uri):
 
     return embed_list
 
+
 @app.route('/')
 def index():
+    return render_template('index.html')
+
+
+@app.route('/search')
+def search():
     # Input mood
-    input = "roadtrip"
+    # input = "roadtrip"
     genre = ""
+    input = request.args.get('q')
+
+    print(input)
 
     # Call functions
     interpretation = gpt3_interpret(input)
@@ -205,6 +236,7 @@ def index():
         html += embed
 
     # Render the HTML string format as a response
-    return render_template("index.html", tracks=html)
+    return html
 
-app.run(host="0.0.0.0", port=80)
+
+app.run(host="0.0.0.0", port=5000)
