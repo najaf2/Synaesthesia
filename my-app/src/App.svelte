@@ -4,8 +4,8 @@
 		console.log(searchInput.value);
 		console.log(selectedGenres)
 
-		const selectedGenreIds = selectedGenres.map((genre) => genre.id);
-		const selectedGenreQuery = selectedGenreIds.join(" ");
+		// const selectedGenreIds = selectedGenres.map((genre) => genre.id);
+		const selectedGenreQuery = selectedGenres.sort().join(" ");
 		const response = await fetch(
 			`http://localhost:5000/search?q=${searchInput.value}&genres=${selectedGenreQuery}`
 		);
@@ -13,17 +13,47 @@
 		results.innerHTML = data;
 	}
 
+	async function exp_search() {
+		console.log(searchInput.value);
+		console.log(selectedGenres)
+
+		// const selectedGenreIds = selectedGenres.map((genre) => genre.id);
+		const selectedGenreQuery = selectedGenres.sort().join(" ");
+		const response = await fetch(
+			`http://localhost:5000/expsearch?q=${searchInput.value}&genres=${selectedGenreQuery}`
+		);
+		const data = await response.text();
+		results.innerHTML = data;
+	}
+
 	function submit(event) {
 		event.preventDefault();
-		search();
+		if (event.submitter.name == "exp") {
+			exp_search()
+		}
+		else {
+			search();
+		}
 	}
 
 	let genres = [
 		{ id: "pop", label: "Pop" },
-		{ id: "hiphop", label: "Hip Hop" },
+		{ id: "rap", label: "Hip-hop/Rap" },
 		{ id: "rock", label: "Rock" },
 		{ id: "edm", label: "EDM" },
+		{ id: "trap", label: "Trap" },
 		{ id: "country", label: "Country" },
+		{ id: "r&b", label: "R&B" },
+		{ id: "k pop", label: "K Pop" },
+		{ id: "latin", label: "Latin" },
+		{ id: "desi", label: "Desi" },
+		{ id: "anime", label: "Anime" },
+		{ id: "instrumental", label: "Instrumental" },
+		{ id: "metal", label: "Metal" },
+		{ id: "funk", label: "Funk" },
+
+
+		
 	];
 	let selectedGenres = [];
 	function updateSelectedGenres(event) {
@@ -47,6 +77,8 @@
 			bind:this={searchInput}
 		/>
 		<button type="submit" class="search-button">Search</button>
+		<button name = "exp" type="submit" class="search-button" style="background-color: maroon;">Experimental Search</button>
+
 	</form>
 	<div class="genre-checkboxes">
 		{#each genres as genre}
@@ -120,6 +152,7 @@
 		flex-wrap: wrap;
 		justify-content: center;
 		margin-top: 10px;
+		max-width: 70vw;
 	}
 
 	.genre-checkbox {

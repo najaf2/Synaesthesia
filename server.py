@@ -67,7 +67,7 @@ def gpt3_tracks(prompt, genre):
     max_tokens = 500
     frequency_penalty = 0.69
     presence_penalty = 0.56
-    prompt = f"Can you give me a mix of 15 {genre} tracks that fit the following mood: {prompt}\n"
+    prompt = f"Can you give me a mix of 10 {genre} tracks that fit the following mood: {prompt}\n"
 
     # Call the OpenAI API to generate text based on the prompt
     response = openai.Completion.create(
@@ -243,6 +243,43 @@ def search():
         "URLS": tracks_url,
         "emojis": emojis,
         "interpretation": interpretation,
+        "phrase": reponse_phrase, 
+    }
+
+    return html
+
+@app.route('/expsearch')
+def expsearch():
+    # Input mood
+    # input = "roadtrip"
+    genre = request.args.get('genres')
+    input = request.args.get('q')
+
+    print(input)
+    print(genre)
+
+    # Call functions
+    reponse_phrase = gpt3_phrase(input)
+    print(reponse_phrase)
+    emojis = gpt3_emoji(input)
+    print(emojis)
+    tracks_string = gpt3_tracks(input, genre)
+    # tracks_string = gpt3_tracks("", genre)
+    # print(tracks_string)
+    tracks_url = spotify_search_songs(tracks_string)
+    embed_list = spotify_get_embed(tracks_url)
+
+    # Define the HTML content as a string format
+    html = ""
+    for embed in embed_list:
+        html += embed
+
+    # Return JSON response
+    response = {
+        "html": html,
+        "URLS": tracks_url,
+        "emojis": emojis,
+        "interpretation": input,
         "phrase": reponse_phrase, 
     }
 
