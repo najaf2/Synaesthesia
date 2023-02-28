@@ -4,15 +4,18 @@ import requests
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import openai
+from dotenv import load_dotenv
+import os
 import random
 
 app = Flask(__name__)
+load_dotenv()
 
 CORS(app)
 
-openai.api_key = "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"
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="855d003fbfa94a0b8b9bd61883ec6b3c",
-                                               client_secret="dc10a96627ec41b29d6925bf020af7b4",
+openai.api_key = os.environ.get('OPENAI_KEY')
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=os.environ.get('SPOTIFY_CLIENT_ID'),
+                                               client_secret=os.environ.get('SPOTIFY_CLIENT_SECRET'),
                                                redirect_uri="http://localhost:8888/callback",
                                                scope="user-top-read playlist-modify-public"))
 
@@ -60,7 +63,7 @@ def gpt3_tracks(prompt, genre):
     # Define the prompt and the OpenAI API parameters
     model = "text-davinci-003"
     # model = "text-curie-001"
-    temperature = .6
+    temperature = .4
     max_tokens = 500
     frequency_penalty = 0.69
     presence_penalty = 0.56
@@ -146,16 +149,14 @@ def gpt3_phrase(prompt):
     return str(response.choices[0].text)
 
 
-""" use spotify to search for tracks and return a list of them
+
+def spotify_search_songs(track_list):
+    """ 
+    use spotify to search for tracks and return a list of them. Returns a list of song URLs
 
     Parameters:
         - song_list - a string of songs
-    Returns:
-        - list of song URI's
-"""
-
-
-def spotify_search_songs(track_list):
+    """
     to_strip = "0123456789. "
     tracks_url = []
     track_list_split = track_list.split('\n')
@@ -212,10 +213,11 @@ def index():
 def search():
     # Input mood
     # input = "roadtrip"
-    genre = ""
+    genre = request.args.get('genres')
     input = request.args.get('q')
 
     print(input)
+    print(genre)
 
     # Call functions
     interpretation = gpt3_interpret(input)
@@ -227,15 +229,23 @@ def search():
     tracks_string = gpt3_tracks(interpretation, genre)
     # tracks_string = gpt3_tracks("", genre)
     # print(tracks_string)
-    tracks_uri = spotify_search_songs(tracks_string)
-    embed_list = spotify_get_embed(tracks_uri)
+    tracks_url = spotify_search_songs(tracks_string)
+    embed_list = spotify_get_embed(tracks_url)
 
     # Define the HTML content as a string format
     html = ""
     for embed in embed_list:
         html += embed
 
-    # Render the HTML string format as a response
+    # Return JSON response
+    response = {
+        "html": html,
+        "URLS": tracks_url,
+        "emojis": emojis,
+        "interpretation": interpretation,
+        "phrase": reponse_phrase, 
+    }
+
     return html
 
 
